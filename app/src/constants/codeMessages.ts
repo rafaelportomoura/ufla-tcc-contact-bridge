@@ -20,5 +20,9 @@ export const CODE_MESSAGES = {
   NOT_FOUND_ERROR: {
     code: prefix(n++),
     message: 'Not Found Error!'
+  },
+  CANT_READ_OBJECT: {
+    code: prefix(n++),
+    message: 'Server cant read object!'
   }
 } as const;
