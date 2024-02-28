@@ -10,10 +10,18 @@ export class DecryptProperties {
   }
 
   async decrypt(properties: Record<string, string>): Promise<Record<string, string>> {
-    const decrypted_properties: Record<string, string> = {};
+    const promises: Promise<[string, string]>[] = [];
     for await (const [key, value] of Object.entries(properties)) {
-      decrypted_properties[key] = await this.kms.decrypt(value);
+      promises.push(this.decryptValue(key, value));
     }
-    return decrypted_properties;
+
+    const result = await Promise.all(promises);
+
+    return result.reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {} as Record<string, string>);
+  }
+
+  async decryptValue(key: string, encrypted: string): Promise<[string, string]> {
+    const value = await this.kms.decrypt(encrypted);
+    return [key, value];
   }
 }

@@ -1,6 +1,16 @@
-import { AWS_CONFIGURATION } from '../constants/aws';
-import { AwsParams } from '../types/Aws';
+import { fromIni } from '@aws-sdk/credential-providers';
+import { CONFIGURATION } from '../constants/configuration';
+import { AwsParams, AwsParamsConstructor } from '../types/Aws';
 
-export const aws_config = ({ region, credentials }: AwsParams) => ({ region, credentials });
+export const aws_config = ({ region, profile }: AwsParams) => {
+  const credentials = profile ? fromIni({ profile }) : undefined;
+  return {
+    region,
+    credentials
+  };
+};
 
-export const aws_params = () => AWS_CONFIGURATION;
+export const aws_params = (params: AwsParamsConstructor = {}) => ({
+  region: params.region ?? CONFIGURATION.REGION,
+  ...params
+});

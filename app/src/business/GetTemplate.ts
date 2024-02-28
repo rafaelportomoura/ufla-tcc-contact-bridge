@@ -1,16 +1,17 @@
 import { aws_config } from '../aws/config';
-import { S3 } from '../aws/s3';
-import { GetTemplateArgs } from '../types/GetTemplate';
+import { SES } from '../aws/ses';
+import { GetTemplateArgs, GetTemplateResponse } from '../types/GetTemplate';
 
 export class GetTemplate {
-  private s3: S3;
+  private ses: SES;
 
-  constructor({ aws_params, logger }: GetTemplateArgs) {
-    this.s3 = new S3(aws_config(aws_params), logger);
+  constructor({ aws_params }: GetTemplateArgs) {
+    this.ses = new SES(aws_config(aws_params));
   }
 
-  async getTemplate(bucket: string, key: string): Promise<string> {
-    const buffer = await this.s3.get(bucket, key);
-    return buffer.toString('utf-8');
+  async getTemplate(name: string): Promise<GetTemplateResponse> {
+    const template = await this.ses.getTemplate({ TemplateName: name });
+    const { Subject: subject, Html: html, Text: text } = template;
+    return { subject, html, text };
   }
 }
