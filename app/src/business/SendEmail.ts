@@ -28,7 +28,10 @@ export class SendEmail {
     });
   }
 
-  async decryptProperties({ properties, encrypted_properties }: SendEmailParams): Promise<Record<string, string>> {
+  async decryptProperties({
+    properties,
+    encrypted_properties
+  }: SendEmailParams): Promise<Record<string, string> | undefined> {
     if (isEmpty(encrypted_properties)) return properties;
     const decrypted = await this.decrypt_properties.decrypt(encrypted_properties);
     return { ...properties, ...decrypted };

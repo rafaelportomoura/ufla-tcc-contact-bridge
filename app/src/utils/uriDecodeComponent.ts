@@ -1,6 +1,5 @@
 /* eslint-disable no-use-before-define */
 import { isEmpty } from 'lodash';
-import { ParsedQs } from 'qs';
 
 export function decodeObject(obj: unknown): Record<string, unknown> {
   if (isEmpty(obj)) return {};
@@ -18,5 +17,5 @@ export function decodeArray(array: unknown[]): unknown[] {
   return array.map((v) => {
     if (typeof v === 'object') return Array.isArray(v) ? decodeArray(v) : decodeObject(v);
     return decodeURIComponent(v as string);
-  }) as ParsedQs[];
+  });
 }

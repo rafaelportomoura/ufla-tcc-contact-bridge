@@ -1,7 +1,4 @@
 import {
-  CreateEmailTemplateCommand,
-  CreateEmailTemplateCommandInput,
-  CreateEmailTemplateCommandOutput,
   EmailTemplateContent,
   GetEmailTemplateCommand,
   GetEmailTemplateCommandInput,
@@ -23,10 +20,6 @@ export class SES {
 
   constructor(config: SESv2ClientConfig) {
     this.client = new SESv2Client(config);
-  }
-
-  createTemplate(template: CreateEmailTemplateCommandInput): Promise<CreateEmailTemplateCommandOutput> {
-    return this.client.send(new CreateEmailTemplateCommand(template));
   }
 
   listTemplates(input: ListEmailTemplatesCommandInput = {}): Promise<ListEmailTemplatesCommandOutput> {

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { send_email_schema } from '../schemas/sendEmail';
 import { AwsParams } from './Aws';
 
 export type SendEmailArgs = {
@@ -5,10 +7,4 @@ export type SendEmailArgs = {
   encrypt_key: string;
 };
 
-export type SendEmailParams = {
-  to: string[];
-  template: string;
-  properties: Record<string, string>;
-  encrypted_properties: Record<string, string>;
-  from?: string;
-};
+export type SendEmailParams = z.infer<typeof send_email_schema>;
