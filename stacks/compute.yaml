@@ -201,7 +201,6 @@ Resources:
             IdentitySource:
               - $request.header.Authorization
 
-
     LambdaPermission:
         Type: AWS::Lambda::Permission
         Properties:
