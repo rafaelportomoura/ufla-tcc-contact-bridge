@@ -9,24 +9,8 @@ export const CODE_MESSAGES = {
     code: prefix(n++),
     message: 'Internal Server Error!'
   },
-  CANNOT_ACCESS_DATABASE: {
-    code: prefix(n++),
-    message: 'Cannot access database!'
-  },
   VALIDATION_ERROR: {
     code: prefix(n++),
     message: 'Validation Error!'
-  },
-  NOT_FOUND_ERROR: {
-    code: prefix(n++),
-    message: 'Not Found Error!'
-  },
-  PAGE_NOT_FOUND_ERROR: {
-    code: prefix(n++),
-    message: 'Page not found error!'
-  },
-  CANT_READ_OBJECT: {
-    code: prefix(n++),
-    message: 'Server cant read object!'
   }
 } as const;

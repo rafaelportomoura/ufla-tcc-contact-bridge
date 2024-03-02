@@ -11,6 +11,5 @@ export const CONFIGURATION = {
   MICROSERVICE: set_string_env('MICROSERVICE', 'contact-bridge'),
   LOG_LEVEL: set_env<LoggerLevel>('LOG_LEVEL', 'trace'),
   PORT: set_number_env('PORT', 3000),
-  KEY_ARN: set_string_env('KEY_ARN', ''),
-  SES_DEFAULT_EMAIL: set_string_env('SES_DEFAULT_EMAIL', '')
+  KEY_ARN: set_string_env('KEY_ARN', '')
 } as const;

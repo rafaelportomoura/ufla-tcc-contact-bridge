@@ -10,16 +10,6 @@ Parameters:
         Type: String
     ApiBasePath:
         Type: String
-    VpcId:
-        Type: AWS::EC2::VPC::Id
-        Description: Id of VPC for EC2
-    SubnetIdList:
-        Type: List<AWS::EC2::Subnet::Id>
-        Description: VPC subnets list
-    SecurityGroupIdList:
-        Type: List<AWS::EC2::SecurityGroup::Id>
-    AuthorizerFunction:
-        Type: String
     MinContainers:
         Type: Number
         Description: Min containers to scale to
@@ -36,13 +26,7 @@ Parameters:
         Description: Scaling up policy cool down in seconds
     CPUUtilization:
         Type: String
-        Description: Memory of cpu to uses in autoscaling
-    HasPrivateSubnet:
-        Type: String
-        AllowedValues:
-          - true
-          - false
-        Default: false
+        Description: Use of cpu to auto scale
     Image:
         Type: String
         Description: ECR Image
@@ -55,24 +39,11 @@ Parameters:
           - info
           - verbose
           - debug
-    KmsKeyArn:
-        Type: String
-    SesDefaultEmail:
-        Type: String
-    AppMeshArn:
-        Type: String
-    AppMeshName:
-        Type: String
-    LBSecurityGroup:
-        Type: AWS::EC2::SecurityGroup::Id
     ListenerArn:
-        Type: String
-    LoadBalancerDns:
         Type: String
 
 
 Conditions:
-    IsPrivateSubnet: !Equals [!Ref HasPrivateSubnet, true]
     isProd: !Equals [!Ref Stage, prod]
 
 
@@ -87,8 +58,8 @@ Globals:
                 REGION: !Ref AWS::Region
                 ACCOUNT_NUMBER: !Ref AWS::AccountId
                 MICROSERVICE: !Ref Microservice
-                KEY_ARN: !Ref KmsKeyArn
-                SES_DEFAULT_EMAIL: !Ref SesDefaultEmail
+                KEY_ARN: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-${Microservice}-encrypt-key-arn"}
+                SES_DEFAULT_EMAIL: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-email-identity"}
 Resources:
     # -----------------------------------------------
     # API 
@@ -99,20 +70,13 @@ Resources:
             ApiId: !Ref Api
             IntegrationType: HTTP_PROXY
             IntegrationMethod: ANY
-            IntegrationUri: !If
-              - IsPrivateSubnet
-              - !Ref ListenerArn
-              - !Sub http://${LoadBalancerDns}
-            ConnectionType: !If
-              - IsPrivateSubnet
-              - VPC_LINK
-              - INTERNET
-            ConnectionId: !If
-              - IsPrivateSubnet
-              - Fn::ImportValue: !Sub ${Stage}-${Tenant}-vpc-link-id
-              - !Ref AWS::NoValue
+            IntegrationUri: !Ref ListenerArn
+            ConnectionType: VPC_LINK
+            ConnectionId:
+                Fn::ImportValue: !Sub ${Stage}-${Tenant}-vpc-link-id
             PayloadFormatVersion: "1.0"
             RequestParameters:
+                append:header.microservice: !Ref Microservice
                 overwrite:path: '$request.path'
 
     Route:
@@ -206,7 +170,7 @@ Resources:
             Name: LambdaAuthorizer
             ApiId: !Ref Api
             AuthorizerType: REQUEST
-            AuthorizerUri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AuthorizerFunction}/invocations
+            AuthorizerUri: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-api-gateway-authorizer-uri"}
             AuthorizerPayloadFormatVersion: '2.0'
             AuthorizerResultTtlInSeconds: 0
             IdentitySource:
@@ -223,11 +187,11 @@ Resources:
     # -----------------------------------------------
     # App Mesh
     # -----------------------------------------------
-
     VirtualNode:
         Type: AWS::AppMesh::VirtualNode
         Properties:
-            MeshName: !Ref AppMeshArn
+            MeshName:
+                Fn::ImportValue: !Sub ${Stage}-${Tenant}-app-mesh-arn
             VirtualNodeName: !Sub "${Microservice}-virtual-node"
             Spec:
                 Listeners:
@@ -284,7 +248,8 @@ Resources:
               - Key: deregistration_delay.timeout_seconds
                 Value: '60'
             TargetType: ip
-            VpcId: !Ref VpcId
+            VpcId:
+                Fn::ImportValue: !Sub ${Stage}-${Tenant}-vpc-id
             Tags:
               - Key: Service
                 Value: ElasticLoadBalancingV2
@@ -445,7 +410,7 @@ Resources:
                   - Name: MICROSERVICE
                     Value: !Ref Microservice
                   - Name: KEY_ARN
-                    Value: !Ref KmsKeyArn
+                    Value: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-${Microservice}-encrypt-key-arn"}
                 Image: !Ref Image
                 LogConfiguration:
                     LogDriver: awslogs
@@ -459,7 +424,11 @@ Resources:
                 Essential: true
                 Environment:
                   - Name: APPMESH_VIRTUAL_NODE_NAME
-                    Value: !Sub "mesh/${AppMeshName}/virtualNode/${VirtualNode.VirtualNodeName}"
+                    Value: !Sub
+                      - "mesh/${AppMeshName}/virtualNode/${VirtualNodeName}"
+                      - AppMeshName:
+                            Fn::ImportValue: !Sub ${Stage}-${Tenant}-app-mesh-name
+                        VirtualNodeName: !GetAtt VirtualNode.VirtualNodeName
                   - Name: AWS_REGION
                     Value: !Ref AWS::Region
                 User: 1337
@@ -493,36 +462,6 @@ Resources:
               - Key: Tenant
                 Value: !Ref Tenant
 
-    ServiceSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-            GroupDescription: Allow http from load balancer
-            VpcId: !Ref VpcId
-            SecurityGroupIngress:
-              - IpProtocol: tcp
-                FromPort: 80
-                ToPort: 80
-                SourceSecurityGroupId: !Ref LBSecurityGroup
-            Tags:
-              - Key: Service
-                Value: VPC
-              - Key: Resource
-                Value: SecurityGroup
-              - Key: Name
-                Value: !Sub ${Stage}-${Tenant}-${Microservice}-service-sg
-              - Key: StackName
-                Value: !Ref AWS::StackName
-              - Key: StackId
-                Value: !Ref AWS::StackId
-              - Key: Region
-                Value: !Ref AWS::Region
-              - Key: Microservice
-                Value: !Ref Microservice
-              - Key: Stage
-                Value: !Ref Stage
-              - Key: Tenant
-                Value: !Ref Tenant
-
     Service:
         Type: AWS::ECS::Service
         Properties:
@@ -536,13 +475,10 @@ Resources:
                 TargetGroupArn: !Ref TargetGroup
             NetworkConfiguration:
                 AwsvpcConfiguration:
-                    AssignPublicIp: !If
-                      - IsPrivateSubnet
-                      - DISABLED
-                      - ENABLED
+                    AssignPublicIp: DISABLED
                     SecurityGroups:
-                      - !Ref ServiceSecurityGroup
-                    Subnets: !Ref SubnetIdList
+                      - Fn::ImportValue: !Sub "${Stage}-${Tenant}-private-subnet-security-group-id"
+                    Subnets: !Split [',', {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-private-subnets-list"}]
             Tags:
               - Key: Service
                 Value: ECS
@@ -652,8 +588,10 @@ Resources:
             CodeUri: ./../dist/handlers
             Handler: sendEmail.sendEmail
             VpcConfig:
-                SubnetIds: !Ref SubnetIdList
-                SecurityGroupIds: !Ref SecurityGroupIdList
+                SubnetIds: !Split [',', {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-private-subnets-list"}]
+                SecurityGroupIds:
+                  - {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-public-subnet-security-group-id"}
+                  - {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-private-subnet-security-group-id"}
             Tags:
                 Service: Serverless
                 Resource: Function
