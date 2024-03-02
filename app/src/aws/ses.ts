@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/client-sesv2';
 import { CODE_MESSAGES } from '../constants/codeMessages';
 import { NotFoundError } from '../exceptions/NotFoundError';
+import { ListTemplateRequest } from '../types/ListTemplate';
 
 export class SES {
   private client: SESv2Client;
@@ -24,6 +25,18 @@ export class SES {
 
   listTemplates(input: ListEmailTemplatesCommandInput = {}): Promise<ListEmailTemplatesCommandOutput> {
     return this.client.send(new ListEmailTemplatesCommand(input));
+  }
+
+  async listPaginatedTemplates(input: ListTemplateRequest): Promise<Required<ListEmailTemplatesCommandOutput>> {
+    let page = 1;
+    let next_token: string | undefined = '';
+    do {
+      const result = await this.listTemplates({ PageSize: input.size });
+      if (page === input.page) return result as Required<ListEmailTemplatesCommandOutput>;
+      page++;
+      next_token = result.NextToken;
+    } while (next_token);
+    throw new NotFoundError(CODE_MESSAGES.PAGE_NOT_FOUND_ERROR);
   }
 
   async getTemplate(input: GetEmailTemplateCommandInput): Promise<Required<EmailTemplateContent>> {
