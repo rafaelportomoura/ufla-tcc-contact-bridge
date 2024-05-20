@@ -12,5 +12,9 @@ export const CODE_MESSAGES = {
   VALIDATION_ERROR: {
     code: prefix(n++),
     message: 'Validation Error!'
+  },
+  INVALID_ENCRYPTION: {
+    code: prefix(n++),
+    message: 'Invalid encryption!'
   }
 } as const;
