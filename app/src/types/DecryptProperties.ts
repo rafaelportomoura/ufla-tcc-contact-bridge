@@ -1,6 +1,7 @@
-import { AwsParams } from './Aws';
+import { Logger } from '../adapters/logger';
+import { KMS } from '../aws/kms';
 
 export type DecryptPropertiesArgs = {
-  aws_params: AwsParams;
-  encrypt_key: string;
+  kms: KMS;
+  logger: Logger;
 };

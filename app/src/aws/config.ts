@@ -1,6 +1,6 @@
 import { fromIni } from '@aws-sdk/credential-providers';
 import { CONFIGURATION } from '../constants/configuration';
-import { AwsParams, AwsParamsConstructor } from '../types/Aws';
+import { AwsParams } from '../types/Aws';
 
 export const aws_config = ({ region, profile }: AwsParams) => {
   const credentials = profile ? fromIni({ profile }) : undefined;
@@ -10,7 +10,7 @@ export const aws_config = ({ region, profile }: AwsParams) => {
   };
 };
 
-export const aws_params = (params: AwsParamsConstructor = {}) => ({
-  region: params.region ?? CONFIGURATION.REGION,
-  ...params
+export const aws_params = (config: Pick<typeof CONFIGURATION, 'REGION' | 'PROFILE' | 'STAGE'>) => ({
+  region: config.REGION,
+  profile: config.STAGE === 'development' ? config.PROFILE : undefined
 });

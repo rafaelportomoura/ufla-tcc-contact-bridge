@@ -1,12 +1,15 @@
-import { aws_config } from '../aws/config';
+/* eslint-disable lines-between-class-members */
+import { Logger } from '../adapters/logger';
 import { KMS } from '../aws/kms';
 import { DecryptPropertiesArgs } from '../types/DecryptProperties';
 
 export class DecryptProperties {
   private kms: KMS;
+  private logger: Logger;
 
-  constructor({ encrypt_key, aws_params }: DecryptPropertiesArgs) {
-    this.kms = new KMS(encrypt_key, aws_config(aws_params));
+  constructor({ kms, logger }: DecryptPropertiesArgs) {
+    this.kms = kms;
+    this.logger = logger;
   }
 
   async decrypt(properties: Record<string, string>): Promise<Record<string, string>> {
@@ -22,6 +25,7 @@ export class DecryptProperties {
 
   async decryptValue(key: string, encrypted: string): Promise<[string, string]> {
     const value = await this.kms.decrypt(encrypted);
+    this.logger.debug('DecryptProperties::', key, value);
     return [key, value];
   }
 }

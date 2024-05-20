@@ -39,7 +39,12 @@ Parameters:
           - info
           - verbose
           - debug
+          - silent
     ListenerArn:
+        Type: String
+    KeyArn: 
+        Type: String
+    EmailIdentity:
         Type: String
 
 
@@ -58,8 +63,8 @@ Globals:
                 REGION: !Ref AWS::Region
                 ACCOUNT_NUMBER: !Ref AWS::AccountId
                 MICROSERVICE: !Ref Microservice
-                KEY_ARN: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-${Microservice}-encrypt-key-arn"}
-                SES_DEFAULT_EMAIL: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-email-identity"}
+                KEY_ARN: !Ref KeyArn
+                SES_DEFAULT_EMAIL: !Ref EmailIdentity
 Resources:
     # -----------------------------------------------
     # API 
@@ -469,7 +474,7 @@ Resources:
             DesiredCount: !Ref MinContainers
             LaunchType: FARGATE
             TaskDefinition: !Ref TaskDefinition
-            LoadBalancers:
+            LoadBalancers:{'Fn::ImportValue': !Sub "${Stage}-${Tenant}-email-identity"}
               - ContainerName: !Sub ${Stage}-${Tenant}-${Microservice}-http
                 ContainerPort: 80
                 TargetGroupArn: !Ref TargetGroup

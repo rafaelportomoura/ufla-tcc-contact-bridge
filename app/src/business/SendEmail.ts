@@ -1,21 +1,25 @@
+/* eslint-disable lines-between-class-members */
 import { isEmpty } from 'lodash';
-import { aws_config } from '../aws/config';
+import { Logger } from '../adapters/logger';
 import { SES } from '../aws/ses';
 import { SendEmailArgs, SendEmailParams } from '../types/SendEmail';
 import { DecryptProperties } from './DecryptProperties';
 
 export class SendEmail {
   private ses: SES;
-
+  private logger: Logger;
   private decrypt_properties: DecryptProperties;
 
-  constructor({ aws_params, encrypt_key }: SendEmailArgs) {
-    this.ses = new SES(aws_config(aws_params));
-    this.decrypt_properties = new DecryptProperties({ encrypt_key, aws_params });
+  constructor({ ses, decrypt_properties, logger }: SendEmailArgs) {
+    this.ses = ses;
+    this.decrypt_properties = decrypt_properties;
+    this.logger = logger;
   }
 
   async sendEmail(params: SendEmailParams): Promise<void> {
+    this.logger.debug('SendEmail::', params);
     const properties = await this.decryptProperties(params);
+    this.logger.debug('SendEmail::Properties', properties);
     await this.ses.sendEmail({
       Destination: { ToAddresses: params.to },
       Content: {

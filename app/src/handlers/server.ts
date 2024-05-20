@@ -2,7 +2,7 @@ import FastifyCors from '@fastify/cors';
 import Fastify from 'fastify';
 import qs from 'fastify-qs';
 
-import { logger_options } from '../adapters/logger';
+
 import { CONFIGURATION } from '../constants/configuration';
 import { HTTP_STATUS_CODE } from '../constants/httpStatus';
 import { error_middleware } from '../middlewares/error';
@@ -10,7 +10,9 @@ import { router } from '../routes';
 
 async function main() {
   const server = Fastify({
-    logger: logger_options(CONFIGURATION.STAGE, CONFIGURATION.LOG_LEVEL)
+    logger: {
+      level: 'silent'
+    }
   });
   server.register(qs, {});
   server.register(FastifyCors, {
