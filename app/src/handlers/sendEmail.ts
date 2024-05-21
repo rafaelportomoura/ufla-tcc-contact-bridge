@@ -1,14 +1,15 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { SQSEvent } from 'aws-lambda';
 import { Logger } from '../adapters/logger';
 import { Validator } from '../adapters/validate';
 import { aws_config, aws_params } from '../aws/config';
 import { KMS } from '../aws/kms';
 import { SES } from '../aws/ses';
+import { DecryptProperties } from '../business/DecryptProperties';
 import { SendEmail } from '../business/SendEmail';
 import { CONFIGURATION } from '../constants/configuration';
 import { send_email_schema } from '../schemas/sendEmail';
 import { sqs_request_id } from '../utils/sqsId';
-import { DecryptProperties } from './../business/DecryptProperties';
 
 export async function sendEmail(event: SQSEvent): Promise<void> {
   const { Records } = event;
