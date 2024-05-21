@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+    Stage:
+        Type: String
+    Tenant:
+        Type: String
+    Microservice:
+        Type: String
+
+Resources:
+    # -----------------------------------------
+    # APP MESH
+    # -----------------------------------------
+    CloudMapService:
+        Type: AWS::ServiceDiscovery::Service
+        Properties:
+            Name: !Ref Microservice
+            DnsConfig:
+                DnsRecords:
+                  - Type: A
+                    TTL: 60
+                NamespaceId: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-cloud-map-namespace-id"}
+                RoutingPolicy: MULTIVALUE
+
+    VirtualNode:
+        Type: AWS::AppMesh::VirtualNode
+        Properties:
+            MeshName:
+                Fn::ImportValue: !Sub ${Stage}-${Tenant}-app-mesh-name
+            VirtualNodeName: !Ref Microservice
+            Spec:
+                Listeners:
+                  - PortMapping:
+                        Port: 80
+                        Protocol: http
+                ServiceDiscovery:
+                    AWSCloudMap:
+                        NamespaceName: {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-cloud-map-namespace-name"}
+                        ServiceName: !Ref Microservice
+            Tags:
+              - Key: Service
+                Value: AppMesh
+              - Key: Resource
+                Value: VirtualNode
+              - Key: Name
+                Value: !Sub ${Stage}-${Tenant}-app-mesh-name
+              - Key: StackName
+                Value: !Ref AWS::StackName
+              - Key: StackId
+                Value: !Ref AWS::StackId
+              - Key: Region
+                Value: !Ref AWS::Region
+              - Key: Microservice
+                Value: !Ref Microservice
+              - Key: Stage
+                Value: !Ref Stage
+              - Key: Tenant
+                Value: !Ref Tenant
+
+Outputs:
+    CloudMapServiceArn:
+        Description: CloudMap Service Arn
+        Value: !GetAtt CloudMapService.Arn
+        Export:
+            Name: !Sub ${Stage}-${Tenant}-${Microservice}-cloud-map-service-arn
