@@ -20,7 +20,7 @@ Parameters:
           - silent
     KeyArn:
         Type: String
-    EmailIdentity:
+    DefaultEmail:
         Type: String
     MinContainers:
         Type: Number
@@ -217,7 +217,7 @@ Resources:
                   - Name: KEY_ARN
                     Value: !Ref KeyArn
                   - Name: SES_DEFAULT_EMAIL
-                    Value: !Ref EmailIdentity  
+                    Value: !Ref DefaultEmail  
                 Image: !Sub 
                   - "${uri}:${tag}"
                   - uri: {"Fn::ImportValue": !Sub "${Stage}-${Tenant}-${Microservice}-ecr-repository-uri"}
