@@ -7,7 +7,7 @@ from scripts.exception import DeployException
 args = get_args(
     {
         "stage": {"type": "str", "required": False, "default": "prod"},
-        "microservice": {"type": "str", "required": False, "default": "oauth"},
+        "microservice": {"type": "str", "required": False, "default": "contact-bridges"},
         "tenant": {"type": "str", "required": False, "default": "tcc"},
         "region": {"type": "str", "required": False, "default": "us-east-2"},
         "profile": {"type": "str", "required": False, "default": "default"},
