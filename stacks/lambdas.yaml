@@ -47,8 +47,8 @@ Resources:
         Properties:
             FunctionName: !Sub ${Stage}-${Tenant}-${Microservice}-send-email
             Role: !GetAtt LambdaRole.Arn
-            CodeUri: ./../dist/handlers
-            Handler: sendEmail.sendEmail
+            CodeUri: ./../
+            Handler: dist/handlers/sendEmail.sendEmail
             VpcConfig:
                 SubnetIds: !Split [',', {'Fn::ImportValue': !Sub "${Stage}-${Tenant}-private-subnets-list"}]
                 SecurityGroupIds:
